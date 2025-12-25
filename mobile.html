@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send to PC</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .box {
+            border: 2px solid #333;
+            background-color: #111;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .status {
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .status.connected { color: #4caf50; }
+        .status.error { color: #d32f2f; }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+            padding: 15px;
+            box-sizing: border-box;
+            resize: none;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .file-label {
+            background: #333;
+            padding: 15px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            transition: background 0.2s;
+            border: 1px solid #444;
+        }
+        .file-label:hover { background: #444; }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="box">
+            <div class="status" id="status">Connecting to PC...</div>
+            
+            <textarea id="msg-input" placeholder="აკრიფე ტექსტი..."></textarea>
+            
+            <label class="file-label">
+                <input type="file" id="file-input" style="display: none;">
+                📎 ფაილის არჩევა
+            </label>
+            <div id="file-name" style="margin-bottom: 15px; font-size: 14px; color: #4caf50;"></div>
+
+            <button id="send-btn" disabled>გაგზავნა</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('target');
+        const peer = new Peer();
+        
+        const statusDisplay = document.getElementById('status');
+        const msgInput = document.getElementById('msg-input');
+        const fileInput = document.getElementById('file-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        const sendBtn = document.getElementById('send-btn');
+        let conn = null;
+
+        peer.on('open', (id) => {
+            if (!targetId) {
+                statusDisplay.textContent = "Error: No Target ID";
+                statusDisplay.className = "status error";
+                return;
+            }
+
+            conn = peer.connect(targetId);
+
+            conn.on('open', () => {
+                statusDisplay.textContent = "Connected to PC";
+                statusDisplay.className = "status connected";
+                sendBtn.disabled = false;
+            });
+
+            conn.on('error', (err) => {
+                statusDisplay.textContent = "Connection Failed";
+                statusDisplay.className = "status error";
+            });
+
+            conn.on('close', () => {
+                statusDisplay.textContent = "Disconnected";
+                statusDisplay.className = "status error";
+                sendBtn.disabled = true;
+            });
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = "Selected: " + fileInput.files[0].name;
+            }
+        });
+
+        sendBtn.addEventListener('click', () => {
+            const text = msgInput.value;
+            const file = fileInput.files[0];
+
+            if (text) {
+                conn.send({ type: 'text', content: text });
+                msgInput.value = '';
+            }
+
+            if (file) {
+                conn.send({
+                    type: 'file',
+                    name: file.name,
+                    file: file
+                });
+                fileInput.value = '';
+                fileNameDisplay.textContent = 'გაგზავნილია!';
+                setTimeout(() => fileNameDisplay.textContent = '', 2000);
+            }
+        });
+    </script>
+</body>
+</html>

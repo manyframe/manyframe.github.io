@@ -143,6 +143,14 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        #filename-input {
+            padding: 12px;
+            border-radius: 5px;
+            border: none;
+            width: 200px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -165,6 +173,7 @@
     </div>
 
     <div class="actions">
+        <input type="text" id="filename-input" placeholder="ფაილის სახელი">
         <button id="download-btn" disabled>გადმოწერა (ZIP)</button>
         <button id="reset-btn">გასუფთავება</button>
     </div>
@@ -175,6 +184,7 @@
         const previewContainer = document.getElementById('preview-container');
         const downloadBtn = document.getElementById('download-btn');
         const resetBtn = document.getElementById('reset-btn');
+        const filenameInput = document.getElementById('filename-input');
         
         let processedImages = []; // ინახავს { name, blob } ობიექტებს
 
@@ -234,8 +244,7 @@
 
                         // კონვერტაცია PNG-ში
                         canvas.toBlob((blob) => {
-                            const newName = file.name.replace(/\.[^/.]+$/, "") + "_1x1.png";
-                            resolve({ name: newName, blob: blob });
+                            resolve({ blob: blob });
                         }, 'image/png');
                     };
                     img.src = e.target.result;
@@ -257,7 +266,11 @@
             const indBtn = document.createElement('button');
             indBtn.className = 'individual-download-btn';
             indBtn.innerHTML = '⬇';
-            indBtn.onclick = () => saveAs(imgData.blob, imgData.name);
+            indBtn.onclick = () => {
+                const baseName = filenameInput.value.trim() || "Image";
+                const index = processedImages.indexOf(imgData) + 1;
+                saveAs(imgData.blob, `${baseName} ${index}.png`);
+            };
 
             wrapper.appendChild(previewImg);
             wrapper.appendChild(indBtn);
@@ -276,19 +289,21 @@
         // ZIP ფაილის შექმნა და გადმოწერა
         downloadBtn.addEventListener('click', () => {
             if (processedImages.length === 0) return;
+            
+            const baseName = filenameInput.value.trim() || "Image";
 
             if (processedImages.length === 1) {
-                saveAs(processedImages[0].blob, processedImages[0].name);
+                saveAs(processedImages[0].blob, `${baseName} 1.png`);
                 return;
             }
 
             const zip = new JSZip();
-            processedImages.forEach(imgData => {
-                zip.file(imgData.name, imgData.blob);
+            processedImages.forEach((imgData, i) => {
+                zip.file(`${baseName} ${i + 1}.png`, imgData.blob);
             });
 
             zip.generateAsync({ type: "blob" }).then((content) => {
-                saveAs(content, "converted_images.zip");
+                saveAs(content, `${baseName}.zip`);
             });
         });
 
@@ -299,6 +314,7 @@
             downloadBtn.style.display = 'none';
             resetBtn.style.display = 'none';
             fileInput.value = ''; // ფაილის ინპუტის გასუფთავება
+            filenameInput.value = '';
         });
     </script>
 </body>

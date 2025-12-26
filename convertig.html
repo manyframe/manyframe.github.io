@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Converter</title>
+    <!-- JSZip და FileSaver ბიბლიოთეკები ZIP ფაილის გენერაციისთვის -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: sans-serif;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 { margin-bottom: 20px; text-align: left; font-size: 24px; }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .left-panel {
+            width: 320px;
+            flex-shrink: 0;
+            gap: 20px;
+            padding-right: 10px; /* Scrollbar space */
+        }
+
+        .center-panel {
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            background-color: #0a0a0a;
+            border-radius: 16px;
+            border: 1px solid #222;
+        }
+
+        .right-panel {
+            width: 250px;
+            flex-shrink: 0;
+            justify-content: center;
+            padding-left: 10px;
+        }
+
+        .control-group {
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .group-title {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .radio-btn {
+            position: relative;
+        }
+
+        .radio-btn input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .radio-btn span {
+            display: block;
+            padding: 10px 20px;
+            background-color: #222;
+            border: 0px solid #444;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-size: 14px;
+            color: #ccc;
+            user-select: none;
+            font-weight: 700;
+        }
+
+        .radio-btn input:checked + span {
+            background-color: #fff;
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.575);
+        }
+
+        .radio-btn:hover span {
+            background-color: #333;
+            border-color: #666;
+        }
+
+        .slider-container {
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: #fff;
+            cursor: pointer;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .anchor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, auto);
+            gap: 5px;
+        }
+        .anchor-grid .radio-btn:nth-child(1) { grid-column: 2; grid-row: 1; }
+        .anchor-grid .radio-btn:nth-child(2) { grid-column: 1; grid-row: 2; }
+        .anchor-grid .radio-btn:nth-child(3) { grid-column: 2; grid-row: 2; }
+        .anchor-grid .radio-btn:nth-child(4) { grid-column: 3; grid-row: 2; }
+        .anchor-grid .radio-btn:nth-child(5) { grid-column: 2; grid-row: 3; }
+        .anchor-grid .radio-btn span { padding: 8px 15px; }
+
+        .main-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .box {
+            width: 500px;
+            height: 500px;
+            border: 2px solid #333;
+            background-color: #111;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* მარცხენა კონტეინერი - Upload Area */
+        .upload-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+            padding: 20px;
+        }
+        .upload-area:hover { background-color: #1a1a1a; }
+        .upload-area p { color: #888; pointer-events: none; }
+
+        /* მარჯვენა კონტეინერი - Preview Area */
+        .preview-area {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            align-content: start;
+        }
+
+        .preview-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: var(--preview-ratio, 1/1);
+            border: 0px solid #444;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .preview-item {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            background-color: #000;
+            cursor: zoom-in;
+        }
+
+        .individual-download-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .preview-wrapper:hover .individual-download-btn {
+            opacity: 1;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        #download-btn {
+            display: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        #download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #reset-btn {
+            display: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            background-color: #d32f2f;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #filename-input {
+            padding: 12px;
+            border-radius: 5px;
+            border: none;
+            width: 100%;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #333;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-layout">
+        <div class="panel left-panel">
+            <h1>Instagram Converter</h1>
+                <div class="control-group">
+                    <span class="group-title">Resolution</span>
+                    <div class="radio-group">
+                        <label class="radio-btn">
+                            <input type="radio" name="format" value="1x1">
+                            <span>1:1 (Square)</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="format" value="4x5" checked>
+                            <span>4:5 (Portrait)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-title">Mode</span>
+                    <div class="radio-group">
+                        <label class="radio-btn">
+                            <input type="radio" name="mode" value="fill" checked>
+                            <span>Fill (Crop)</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="mode" value="fit">
+                            <span>Fit (Borders)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-title">Anchor</span>
+                    <div class="radio-group anchor-grid">
+                        <label class="radio-btn">
+                            <input type="radio" name="align" value="top">
+                            <span>↑</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="align" value="left">
+                            <span>←</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="align" value="center" checked>
+                            <span>•</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="align" value="right">
+                            <span>→</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="align" value="bottom">
+                            <span>↓</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-title">Background</span>
+                    <div class="radio-group">
+                        <label class="radio-btn">
+                            <input type="radio" name="bg" value="white" checked>
+                            <span>White</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="bg" value="black">
+                            <span>Black</span>
+                        </label>
+                        <label class="radio-btn">
+                            <input type="radio" name="bg" value="blur">
+                            <span>Blur</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-title">Sharpness</span>
+                    <div class="slider-container">
+                        <input type="range" id="sharpness-slider" min="0" max="5" step="1" value="4">
+                        <div class="slider-labels">
+                            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-title">Extras</span>
+                    <label class="radio-btn" style="width: 100%;">
+                        <input type="checkbox" id="dither-check" checked>
+                        <span style="text-align: center;">Anti-Banding (Dither)</span>
+                    </label>
+                </div>
+        </div>
+
+        <div class="panel center-panel">
+            <div class="main-container">
+                <!-- მარცხენა: ატვირთვა -->
+                <div class="box">
+                    <div class="upload-area" id="drop-zone">
+                        <p>ჩააგდე ფოტოები აქ<br>(ან დააკლიკე ასარჩევად)</p>
+                        <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- მარჯვენა: შედეგი -->
+                <div class="box">
+                    <div class="preview-area" id="preview-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="actions">
+                <input type="text" id="filename-input" placeholder="ფაილის სახელი">
+                <button id="download-btn" disabled>გადმოწერა (ZIP)</button>
+                <button id="reset-btn">გასუფთავება</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="modal">
+        <span class="close-modal">&times;</span>
+        <img class="modal-content" id="full-image">
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const filenameInput = document.getElementById('filename-input');
+        
+        const modal = document.getElementById('image-modal');
+        const modalImg = document.getElementById('full-image');
+        const closeModal = document.querySelector('.close-modal');
+
+        let processedImages = []; // ინახავს { name, blob } ობიექტებს
+        let storedFiles = []; // ინახავს ორიგინალ ფაილებს
+
+        // Event Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.backgroundColor = '#222'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.backgroundColor = ''; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '';
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        
+        // ოფციების შეცვლისას განახლება
+        document.querySelectorAll('input[name="format"]').forEach(input => {
+            input.addEventListener('change', () => {
+                updateAspectRatio();
+                reprocessAll();
+            });
+        });
+        document.querySelectorAll('input[name="mode"], input[name="bg"], input[name="align"]').forEach(input => {
+            input.addEventListener('change', reprocessAll);
+        });
+        document.getElementById('sharpness-slider').addEventListener('change', reprocessAll);
+        document.getElementById('dither-check').addEventListener('change', reprocessAll);
+        
+        updateAspectRatio(); // Initial call
+
+        async function handleFiles(files) {
+            // 1. ფილტრაცია და სორტირება
+            const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            const sortedFiles = validFiles.sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+            );
+
+            // შენახვა შემდგომი განახლებისთვის
+            storedFiles.push(...sortedFiles);
+
+            // 2. დამუშავება
+            const promises = sortedFiles.map(processFile);
+            const results = await Promise.all(promises);
+
+            // 3. შედეგების გამოტანა
+            results.forEach(data => {
+                if (data) addToGallery(data);
+            });
+        }
+
+        function updateAspectRatio() {
+            const format = document.querySelector('input[name="format"]:checked').value;
+            document.documentElement.style.setProperty('--preview-ratio', format === '1x1' ? '1/1' : '4/5');
+        }
+
+        async function reprocessAll() {
+            if (storedFiles.length === 0) return;
+            
+            const promises = storedFiles.map(processFile);
+            const results = await Promise.all(promises);
+            
+            processedImages = [];
+            previewContainer.innerHTML = '';
+            
+            results.forEach(data => {
+                if (data) addToGallery(data);
+            });
+        }
+
+        function processFile(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // პარამეტრების წაკითხვა
+                        const format = document.querySelector('input[name="format"]:checked').value;
+                        const mode = document.querySelector('input[name="mode"]:checked').value;
+                        const bg = document.querySelector('input[name="bg"]:checked').value;
+                        const align = document.querySelector('input[name="align"]:checked').value;
+                        const sharpnessLevel = parseInt(document.getElementById('sharpness-slider').value);
+                        const useDither = document.getElementById('dither-check').checked;
+                        const sharpnessMap = [0, 0.01, 0.05, 0.1, 0.15, 0.2];
+
+                        const targetWidth = 1080;
+                        const targetHeight = format === '1x1' ? 1080 : 1350;
+
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight;
+
+                        // ფონის დახატვა
+                        if (bg === 'blur') {
+                            // Blur Background Logic
+                            const fillScale = Math.max(targetWidth / img.width, targetHeight / img.height);
+                            const fillW = img.width * fillScale;
+                            const fillH = img.height * fillScale;
+                            const fillX = (targetWidth - fillW) / 2;
+                            const fillY = (targetHeight - fillH) / 2;
+                            
+                            ctx.save();
+                            ctx.filter = 'blur(40px)';
+                            ctx.drawImage(img, fillX - 50, fillY - 50, fillW + 100, fillH + 100); // ცოტა გაზრდა კიდეების დასაფარად
+                            ctx.restore();
+                        } else {
+                            ctx.fillStyle = bg === 'white' ? '#ffffff' : '#000000';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        }
+
+                        // მასშტაბის გამოთვლა
+                        let scale;
+                        if (mode === 'fill') {
+                            scale = Math.max(targetWidth / img.width, targetHeight / img.height);
+                        } else {
+                            scale = Math.min(targetWidth / img.width, targetHeight / img.height);
+                        }
+
+                        const scaledWidth = img.width * scale;
+                        const scaledHeight = img.height * scale;
+                        
+                        // ცენტრირება (Default)
+                        let x = (targetWidth - scaledWidth) / 2;
+                        let y = (targetHeight - scaledHeight) / 2;
+
+                        // Alignment overrides
+                        if (align === 'top') y = 0;
+                        if (align === 'bottom') y = targetHeight - scaledHeight;
+                        if (align === 'left') x = 0;
+                        if (align === 'right') x = targetWidth - scaledWidth;
+
+                        // ხარისხიანი რენდერი
+                        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+                        // სიმკვეთრის მომატება (Little Sharpness)
+                        if (sharpnessMap[sharpnessLevel] > 0) {
+                            sharpen(ctx, canvas.width, canvas.height, sharpnessMap[sharpnessLevel]);
+                        }
+
+                        // Dithering (Anti-Banding)
+                        if (useDither) {
+                            addNoise(ctx, canvas.width, canvas.height, 3);
+                        }
+
+                        // კონვერტაცია PNG-ში (Lossless & Web Optimized)
+                        canvas.toBlob((blob) => {
+                            resolve({ blob: blob });
+                        }, 'image/png');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function addToGallery(imgData) {
+            processedImages.push(imgData);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'preview-wrapper';
+
+            const previewImg = document.createElement('img');
+            previewImg.src = URL.createObjectURL(imgData.blob);
+            previewImg.className = 'preview-item';
+            previewImg.onclick = () => {
+                modal.style.display = "flex";
+                modalImg.src = previewImg.src;
+            };
+
+            const indBtn = document.createElement('button');
+            indBtn.className = 'individual-download-btn';
+            indBtn.innerHTML = '🡇';
+            indBtn.onclick = () => {
+                const baseName = filenameInput.value.trim() || "Image";
+                const index = processedImages.indexOf(imgData) + 1;
+                saveAs(imgData.blob, `${baseName} ${index}.png`);
+            };
+
+            wrapper.appendChild(previewImg);
+            wrapper.appendChild(indBtn);
+            previewContainer.appendChild(wrapper);
+
+            updateButtons();
+        }
+
+        function updateButtons() {
+            downloadBtn.style.display = 'block';
+            resetBtn.style.display = 'block';
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = processedImages.length === 1 ? 'გადმოწერა' : `გადმოწერა (ZIP) - ${processedImages.length}`;
+        }
+
+        // ZIP ფაილის შექმნა და გადმოწერა
+        downloadBtn.addEventListener('click', () => {
+            if (processedImages.length === 0) return;
+            
+            const baseName = filenameInput.value.trim() || "Image";
+
+            if (processedImages.length === 1) {
+                saveAs(processedImages[0].blob, `${baseName} 1.png`);
+                return;
+            }
+
+            const zip = new JSZip();
+            processedImages.forEach((imgData, i) => {
+                zip.file(`${baseName} ${i + 1}.png`, imgData.blob);
+            });
+
+            zip.generateAsync({ type: "blob" }).then((content) => {
+                saveAs(content, `${baseName}.zip`);
+            });
+        });
+
+        // Reset ფუნქცია
+        resetBtn.addEventListener('click', () => {
+            processedImages = [];
+            storedFiles = [];
+            previewContainer.innerHTML = '';
+            downloadBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+            fileInput.value = '';
+            filenameInput.value = '';
+        });
+
+        // Modal Close Logic
+        closeModal.onclick = () => {
+            modal.style.display = "none";
+        }
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function sharpen(ctx, w, h, mix) {
+            const weights = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+            const katet = 3;
+            const half = 1;
+            
+            const srcData = ctx.getImageData(0, 0, w, h);
+            const srcBuff = srcData.data;
+            const dstData = ctx.createImageData(w, h);
+            const dstBuff = dstData.data;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const dstOff = (y * w + x) * 4;
+                    let r = 0, g = 0, b = 0;
+
+                    for (let cy = 0; cy < katet; cy++) {
+                        for (let cx = 0; cx < katet; cx++) {
+                            const scy = Math.min(h - 1, Math.max(0, y + cy - half));
+                            const scx = Math.min(w - 1, Math.max(0, x + cx - half));
+                            
+                            const srcOff = (scy * w + scx) * 4;
+                            const wt = weights[cy * katet + cx];
+                            r += srcBuff[srcOff] * wt;
+                            g += srcBuff[srcOff + 1] * wt;
+                            b += srcBuff[srcOff + 2] * wt;
+                        }
+                    }
+                    
+                    dstBuff[dstOff] = srcBuff[dstOff] * (1 - mix) + r * mix;
+                    dstBuff[dstOff + 1] = srcBuff[dstOff + 1] * (1 - mix) + g * mix;
+                    dstBuff[dstOff + 2] = srcBuff[dstOff + 2] * (1 - mix) + b * mix;
+                    dstBuff[dstOff + 3] = srcBuff[dstOff + 3];
+                }
+            }
+            ctx.putImageData(dstData, 0, 0);
+        }
+
+        function addNoise(ctx, w, h, amount) {
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = (Math.random() - 0.5) * amount;
+                data[i] += noise;
+                data[i+1] += noise;
+                data[i+2] += noise;
+            }
+            ctx.putImageData(imgData, 0, 0);
+        }
+    </script>
+</body>
+</html>

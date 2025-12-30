@@ -7,6 +7,13 @@
     <!-- JSZip და FileSaver ბიბლიოთეკები ZIP ფაილის გენერაციისთვის -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
+
+    
     <style>
         body {
             background-color: #000000;
@@ -322,6 +329,7 @@
     </style>
 </head>
 <body>
+<a href="index.html" style="text-decoration: none; color: white; position:fixed; top: 6px; left: 6px; z-index: 100; font-family: Comfortaa, sans-serif; font-size: 15px; font-weight: bold;">GO BACK</a>
 <iframe 
   src="background.html" 
   style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"
@@ -442,7 +450,7 @@
             <div class="actions">
                 <input type="text" id="filename-input" placeholder="ფაილის სახელი">
                 <button id="download-btn" disabled>გადმოწერა (ZIP)</button>
-                <button id="reset-btn">გასუფთავება</button>
+                <button id="reset-btn">Clear</button>
             </div>
         </div>
     </div>
@@ -653,7 +661,7 @@
             downloadBtn.style.display = 'block';
             resetBtn.style.display = 'block';
             downloadBtn.disabled = false;
-            downloadBtn.textContent = processedImages.length === 1 ? 'გადმოწერა' : `გადმოწერა (ZIP) - ${processedImages.length}`;
+            downloadBtn.textContent = processedImages.length === 1 ? 'Download' : `Download (ZIP) - ${processedImages.length}`;
         }
 
         // ZIP ფაილის შექმნა და გადმოწერა

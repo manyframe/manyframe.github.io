@@ -25,53 +25,59 @@
             display: flex;
             justify-content: center;
             padding: 60px 0;
+            transition: 0.2s ease;
         }
 
         .brand {
-            font-size: 24px;
+            font-size: 35px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
+            transition: 0.2s ease;
         }
 
         .page-list {
             display: flex;
             flex-direction: column;
-            width: 100%;
+            width: 500px;
+            transition: 0.2s ease;
         }
 
         .page-link {
             text-decoration: none;
             color: #ffffff;
-            padding: 30px 0;
-            border-bottom: 1px solid #333; /* Line between pages */
-            font-size: 18px;
-            transition: letter-spacing 0.3s ease;
+            padding: 30px;
+            border-bottom: 1px solid #ffffff; /* Line between pages */
+            font-size: 23px;
+            transition: ease 0.3s;
             display: block;
             border-radius: 0; /* No round edges */
         }
 
         .page-link:first-child {
-            border-top: 1px solid #333;
+            border-top: 1px solid #ffffff;
         }
 
         .page-link:hover {
-            letter-spacing: 1px; /* Letter distance little up */
+            letter-spacing: 3px; /* Letter distance little up */
         }
     </style>
 </head>
 <body>
+<iframe 
+  src="rain.html" 
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"
+></iframe>
     <div class="container">
         <nav>
             <div class="brand">Manyframe</div>
         </nav>
 
         <div class="page-list">
-            <a href="analyze" class="page-link">Furniture AI Analyzer</a>
-            <a href="square" class="page-link">1x1 Image Converter</a>
-            <a href="qr" class="page-link">QR Code Reader</a>
-            <a href="mobile2pc" class="page-link">Mobile to PC Transfer</a>
-            <a href="latex-to-svg" class="page-link">Latex to SVG</a>
+            <a href="latex-to-svg.html" class="page-link">Latex to SVG</a>
+            <a href="convertig.html" class="page-link">Photo to Instagram</a>
+            <a href="convert1x1.html" class="page-link">1x1 Image Converter</a>
+            <a href="mobile2pc.html" class="page-link">Mobile to PC Transfer</a>
         </div>
     </div>
 </body>

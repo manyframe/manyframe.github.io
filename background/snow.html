@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snow Effect</title>
+    <style>
+        body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(180deg, #4b4e5a, #7f868d);
+        }
+
+        .snow {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            left: 0;
+            top: 0;
+        }
+
+        .flake {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            from {
+                transform: translateY(-10vh) translateX(var(--initial-x));
+            }
+            to {
+                transform: translateY(110vh) translateX(var(--final-x));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="snow"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const snowContainer = document.querySelector('.snow');
+            if (!snowContainer) return;
+
+            const fragment = document.createDocumentFragment();
+            const numFlakes = 300;
+
+            for (let i = 0; i < numFlakes; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'flake';
+
+                const size = Math.random() * 4 + 2; // 2px to 7px
+                const duration = Math.random() * 2 + 3; // 5s to 10s
+                const delay = Math.random() * -10;
+                const initialX = Math.random() * 100;
+                const finalX = initialX + (Math.random() * 20 - 10);
+
+                flake.style.width = `${size}px`;
+                flake.style.height = `${size}px`;
+                flake.style.left = `${Math.random() * 10}vw`;
+                flake.style.opacity = Math.random() / 2;
+                flake.style.animationDuration = `${duration}s`;
+                flake.style.animationDelay = `${delay}s`;
+                flake.style.setProperty('--initial-x', `${initialX}vw`);
+                flake.style.setProperty('--final-x', `${finalX}vw`);
+
+
+                fragment.appendChild(flake);
+            }
+
+            snowContainer.appendChild(fragment);
+        });
+    </script>
+</body>
+</html>

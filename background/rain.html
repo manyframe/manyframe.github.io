@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rain Effect</title>
+    <style>
+        @property --angle {
+            syntax: "<angle>";
+            inherits: false;
+            initial-value: 91deg;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(180deg, #07131c, #305472);
+        }
+
+        .rain {
+            position: absolute;
+            width: 120vw;
+            height: 100vh;
+            z-index: 0;
+            left: -10vw;
+        }
+
+        .drop {
+            border: 0.25vmin solid transparent;
+            border-bottom-color: #abc2e9;
+            position: absolute;
+            top: -5vmin;
+            --angle: 80deg;
+            animation-name: fall;
+            animation-timing-function: ease-in;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes fall {
+            from {
+                transform: rotate(var(--angle)) translateX(0);
+            }
+            to {
+                transform: rotate(var(--angle)) translateX(calc(100vh + 5vmin));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="rain"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rainContainer = document.querySelector('.rain');
+            if (!rainContainer) return;
+
+            const fragment = document.createDocumentFragment();
+            const numDrops = 200;
+
+            for (let i = 0; i < numDrops; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'drop';
+
+                const left = Math.random() * 120;
+                const opacity = Math.random() * 0.6;
+                const borderWidth = Math.random() * 4.8;
+                const duration = Math.random() * 0.5 + 0.5;
+                const delay = Math.random() * -12;
+
+                drop.style.left = `${left}vw`;
+                drop.style.opacity = opacity;
+                drop.style.borderLeftWidth = `${borderWidth}vmin`;
+                drop.style.animationDuration = `${duration}s`;
+                drop.style.animationDelay = `${delay}s`;
+
+                fragment.appendChild(drop);
+            }
+
+            rainContainer.appendChild(fragment);
+        });
+    </script>
+</body>
+</html>

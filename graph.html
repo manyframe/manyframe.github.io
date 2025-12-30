@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Graph Builder</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.1/dist/jsxgraph.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.1/dist/jsxgraphcore.js"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(180deg, #07131c, #305472);
+            color: #ffffff;
+            font-family: 'Comfortaa', sans-serif;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+        }
+        .app-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+        h1 { margin: 0 0 20px 0; text-align: left; font-size: 24px; }
+        .panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .left-panel {
+            width: 380px;
+            flex-shrink: 0;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        .center-panel {
+            flex: 1;
+            background-color: #ffffff15;
+            border-radius: 16px;
+            border: 1px solid #ffffff9f;
+            overflow: hidden;
+        }
+        .jxgbox {
+            width: 100%;
+            height: 100%;
+        }
+        .control-group {
+            background-color: #ffffff15;
+            border: 1px solid #ffffff9f;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .group-title {
+            font-size: 12px;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #ffffff33;
+            padding-bottom: 10px;
+        }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row label { flex-basis: 40px; font-size: 14px; }
+        .input-row input[type="text"], .input-row input[type="color"] {
+            flex: 1;
+            background-color: #ffffff15;
+            color: #fff;
+            border: 1px solid #ffffff9f;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .input-row input[type="color"] { padding: 4px; min-width: 40px; flex: 0; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; font-size: 14px;}
+        #add-function-btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: #ffffff;
+            color: #000000;
+            transition: background-color 0.2s;
+        }
+        #add-function-btn:hover { background-color: #dddddd; }
+        #add-function-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; }
+        .function-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .function-item input[type="text"] { flex: 1; }
+        .remove-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            line-height: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<a href="index.html" style="text-decoration: none; color: white; position:fixed; top: 6px; left: 6px; z-index: 100; font-family: 'Comfortaa', sans-serif; font-size: 15px; font-weight: bold;">GO BACK</a>
+<iframe src="background.html" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"></iframe>
+
+<div class="app-layout">
+    <div class="panel left-panel">
+        <h1>Graph Builder</h1>
+        
+        <div class="control-group">
+            <span class="group-title">Display Options</span>
+            <div class="input-row">
+                <label for="x-range">X:</label>
+                <input type="text" id="x-range" value="-10,10" title="X-axis range (min,max)">
+            </div>
+            <div class="input-row">
+                <label for="y-range">Y:</label>
+                <input type="text" id="y-range" value="-10,10" title="Y-axis range (min,max)">
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="show-grid" checked>
+                <label for="show-grid">Show Grid</label>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="show-labels" checked>
+                <label for="show-labels">Show Axis Numbers</label>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <span class="group-title">Functions</span>
+            <div id="functions-list"></div>
+            <button id="add-function-btn">Add Function</button>
+        </div>
+    </div>
+
+    <div class="panel center-panel">
+        <div id="jxgbox" class="jxgbox"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-10, 10, 10, -10],
+            axis: true,
+            showCopyright: false,
+            grid: true,
+            renderer: 'canvas'
+        });
+
+        const state = {
+            functions: [],
+            intersections: []
+        };
+        const MAX_FUNCTIONS = 6;
+
+        const xRangeInput = document.getElementById('x-range');
+        const yRangeInput = document.getElementById('y-range');
+        const showGridCheckbox = document.getElementById('show-grid');
+        const showLabelsCheckbox = document.getElementById('show-labels');
+        const addFunctionBtn = document.getElementById('add-function-btn');
+        const functionsList = document.getElementById('functions-list');
+        
+        const updateBoard = () => {
+            const xRange = xRangeInput.value.split(',').map(Number);
+            const yRange = yRangeInput.value.split(',').map(Number);
+            if (xRange.length === 2 && yRange.length === 2 && !isNaN(xRange[0]) && !isNaN(xRange[1]) && !isNaN(yRange[0]) && !isNaN(yRange[1])) {
+                 board.setBoundingBox([xRange[0], yRange[1], xRange[1], yRange[0]], true);
+            }
+
+            board.options.grid.strokeColor = showGridCheckbox.checked ? '#ffffff33' : '#00000000';
+            board.options.grid.strokeOpacity = showGridCheckbox.checked ? 0.6 : 0;
+            
+            for (const ax in board.axes) {
+                board.axes[ax].defaultTicks.setAttribute({
+                    drawLabels: showLabelsCheckbox.checked,
+                    label: {
+                        color: showLabelsCheckbox.checked ? 'white' : 'transparent'
+                    }
+                })
+            }
+
+            board.fullUpdate();
+        };
+
+        const renderFunctions = () => {
+            // Clear existing functions from board
+            board.suspendUpdate();
+            state.functions.forEach(f => {
+                if (f.plot) board.removeObject(f.plot);
+            });
+            
+            state.functions.forEach(func => {
+                if (!func.expression || func.expression.trim() === '') {
+                    func.plot = null;
+                    return; // Skip empty/whitespace-only functions
+                }
+                try {
+                    const userFunc = new Function('x', 'return ' + func.expression);
+                    // Test function
+                    userFunc(1);
+                    
+                    func.plot = board.create('functiongraph', [userFunc], {
+                        strokeColor: func.color,
+                        strokeWidth: 2,
+                        name: func.expression // for hover
+                    });
+                } catch (e) {
+                    console.error("Error parsing function:", func.expression, e);
+                    func.plot = null;
+                }
+            });
+            board.unsuspendUpdate();
+        };
+
+        const addFunctionUI = (id, expression = '', color = '#ffffff') => {
+            const funcId = `func-${id}`;
+            const item = document.createElement('div');
+            item.className = 'function-item';
+            item.id = funcId;
+
+            const exprInput = document.createElement('input');
+            exprInput.type = 'text';
+            exprInput.value = expression;
+            exprInput.placeholder = 'e.g., Math.sin(x) or x*x';
+            exprInput.oninput = () => {
+                const func = state.functions.find(f => f.id === id);
+                func.expression = exprInput.value;
+                renderFunctions();
+            };
+
+            const colorInput = document.createElement('input');
+            colorInput.type = 'color';
+            colorInput.value = color;
+            colorInput.oninput = () => {
+                const func = state.functions.find(f => f.id === id);
+                func.color = colorInput.value;
+                renderFunctions();
+            };
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = '-';
+            removeBtn.onclick = () => {
+                state.functions = state.functions.filter(f => f.id !== id);
+                document.getElementById(funcId).remove();
+                addFunctionBtn.disabled = false;
+                renderFunctions();
+            };
+
+            item.appendChild(exprInput);
+            item.appendChild(colorInput);
+            item.appendChild(removeBtn);
+            functionsList.appendChild(item);
+        };
+
+        addFunctionBtn.onclick = () => {
+            if (state.functions.length < MAX_FUNCTIONS) {
+                const newId = Date.now();
+                const defaultColor = ['#FF6347', '#4682B4', '#32CD32', '#FFD700', '#6A5ACD', '#DA70D6'][state.functions.length];
+                state.functions.push({ id: newId, expression: '', color: defaultColor, plot: null });
+                addFunctionUI(newId, '', defaultColor);
+
+                if (state.functions.length >= MAX_FUNCTIONS) {
+                    addFunctionBtn.disabled = true;
+                }
+            }
+        };
+
+        // Event Listeners
+        xRangeInput.addEventListener('change', updateBoard);
+        yRangeInput.addEventListener('change', updateBoard);
+        showGridCheckbox.addEventListener('change', updateBoard);
+        showLabelsCheckbox.addEventListener('change', updateBoard);
+        
+        // Initial call
+        updateBoard();
+        addFunctionBtn.click(); // Add one function by default
+        const firstFunc = state.functions[0];
+        firstFunc.expression = 'x';
+        document.querySelector('.function-item input[type="text"]').value = 'x';
+        renderFunctions();
+
+    });
+</script>
+</body>
+</html>

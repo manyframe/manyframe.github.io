@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ka">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
     
     <style>
         body {
-            background-color: #000000;
+            background: linear-gradient(180deg, #07131c, #305472);
             color: #ffffff;
             font-family: sans-serif;
             height: 100vh;
@@ -434,7 +434,7 @@
                 <!-- მარცხენა: ატვირთვა -->
                 <div class="box">
                     <div class="upload-area" id="drop-zone">
-                        <p>ჩააგდე ფოტოები აქ<br>(ან დააკლიკე ასარჩევად)</p>
+                        <p>Drop photos here<br>(or click to select)</p>
                         <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
                     </div>
                 </div>
@@ -448,8 +448,8 @@
 
         <div class="panel right-panel">
             <div class="actions">
-                <input type="text" id="filename-input" placeholder="ფაილის სახელი">
-                <button id="download-btn" disabled>გადმოწერა (ZIP)</button>
+                <input type="text" id="filename-input" placeholder="File Name">
+                <button id="download-btn" disabled>Download (ZIP)</button>
                 <button id="reset-btn">Clear</button>
             </div>
         </div>

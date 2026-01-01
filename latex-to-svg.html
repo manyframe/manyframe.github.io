@@ -244,6 +244,11 @@
                 };
 
                 MathJax.tex2svgPromise(latex, options).then((node) => {
+                    if (node.innerHTML.includes('Extra open brace or missing close brace')) {
+                        outputArea.innerHTML = '';
+                        lastSvgString = '';
+                        return;
+                    }
                     const svg = node.querySelector('svg');
                     if (!svg) return;
 
@@ -297,7 +302,7 @@
                     
                     lastSvgString = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n' + svgString;
                 }).catch(err => {
-                    outputArea.innerHTML = `<span style="color: #ff4d4d;">Error: ${err.message}</span>`;
+                    outputArea.innerHTML = '';
                     lastSvgString = '';
                 });
             };

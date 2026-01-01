@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Graph Builder</title>
+    <title>Interactive Graph Plotter</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.1/dist/jsxgraph.css" />
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.1/dist/jsxgraphcore.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     
     <style>
         body {
@@ -37,275 +36,203 @@
             height: 100%;
             box-sizing: border-box;
         }
-        .left-panel {
+        .right-panel {
             width: 380px;
             flex-shrink: 0;
-            gap: 20px;
             overflow-y: auto;
             padding-right: 15px;
         }
         .center-panel {
             flex: 1;
-            background-color: #ffffff15;
             border-radius: 16px;
-            border: 1px solid #ffffff9f;
             overflow: hidden;
-        }
-        .jxgbox {
-            width: 100%;
-            height: 100%;
         }
         .control-group {
             background-color: #ffffff15;
             border: 1px solid #ffffff9f;
             border-radius: 12px;
             padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            margin-bottom: 20px;
         }
-        .group-title {
+        .control-group-title {
             font-size: 12px;
             color: #ffffff;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: bold;
-            margin-bottom: 5px;
             border-bottom: 1px solid #ffffff33;
             padding-bottom: 10px;
+            margin-bottom: 15px;
         }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row label { flex-basis: 40px; font-size: 14px; }
-        .input-row input[type="text"], .input-row input[type="color"] {
+        .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .input-row label { flex-basis: 80px; font-size: 14px; text-align: left; }
+        .input-row input[type="number"], .input-row select {
             flex: 1;
             background-color: #ffffff15;
             color: #fff;
             border: 1px solid #ffffff9f;
             border-radius: 8px;
-            padding: 8px;
+            padding: 8px 12px;
             font-size: 14px;
             box-sizing: border-box;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 10px auto;
         }
-        .input-row input[type="color"] { padding: 4px; min-width: 40px; flex: 0; }
-        .checkbox-row { display: flex; align-items: center; gap: 10px; font-size: 14px;}
-        #add-function-btn {
-            padding: 12px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            background-color: #ffffff;
-            color: #000000;
-            transition: background-color 0.2s;
+        .input-row select option {
+            background: #07131c;
+            color: #fff;
         }
-        #add-function-btn:hover { background-color: #dddddd; }
-        #add-function-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; }
-        .function-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
+        
+        .output-div {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ffffff33;
+            font-size: 14px;
+            line-height: 1.6;
         }
-        .function-item input[type="text"] { flex: 1; }
-        .remove-btn {
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            font-weight: bold;
-            line-height: 24px;
-            text-align: center;
+
+        @media (max-width: 768px) {
+            .app-layout {
+                flex-direction: column;
+                padding: 10px;
+                gap: 10px;
+            }
+            .panel {
+                height: auto; /* Override fixed height */
+            }
+            .center-panel {
+                flex: 1 1 50%;
+                min-height: 300px;
+                width: 100%;
+            }
+            .right-panel {
+                width: 100%;
+                flex: 1 1 50%;
+                overflow-y: auto;
+                padding-right: 0;
+            }
+            h1 {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-<a href="index.html" style="text-decoration: none; color: white; position:fixed; top: 6px; left: 6px; z-index: 100; font-family: 'Comfortaa', sans-serif; font-size: 15px; font-weight: bold;">GO BACK</a>
-<iframe src="background.html" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"></iframe>
+<a href="index.html" style="text-decoration: none; color: rgb(255, 255, 255); position:fixed; top: 6px; left: 6px; z-index: 100; font-family: 'Comfortaa', sans-serif; font-size: 15px; font-weight: bold;">GO BACK</a>
+<iframe src="background.html" style="filter:brightness(0.7); position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"></iframe>
 
 <div class="app-layout">
-    <div class="panel left-panel">
-        <h1>Graph Builder</h1>
+    <div class="panel center-panel" id="plot"></div>
+
+    <div class="panel right-panel">
+        <h1>Graph Models</h1>
         
         <div class="control-group">
-            <span class="group-title">Display Options</span>
             <div class="input-row">
-                <label for="x-range">X:</label>
-                <input type="text" id="x-range" value="-10,10" title="X-axis range (min,max)">
-            </div>
-            <div class="input-row">
-                <label for="y-range">Y:</label>
-                <input type="text" id="y-range" value="-10,10" title="Y-axis range (min,max)">
-            </div>
-            <div class="checkbox-row">
-                <input type="checkbox" id="show-grid" checked>
-                <label for="show-grid">Show Grid</label>
-            </div>
-            <div class="checkbox-row">
-                <input type="checkbox" id="show-labels" checked>
-                <label for="show-labels">Show Axis Numbers</label>
+                <label for="template-select">Template:</label>
+                <select id="template-select">
+                    <option value="line">Line</option>
+                    <option value="parabola">Parabola</option>
+                    <option value="supply_demand" selected>Supply & Demand</option>
+                    <option value="profit_max_taker">Profit Max (Price Taker)</option>
+                    <option value="profit_max_setter">Profit Max (Price Setter)</option>
+                    <option value="cobb_douglas">Cobb-Douglas Optimization</option>
+                </select>
             </div>
         </div>
 
-        <div class="control-group">
-            <span class="group-title">Functions</span>
-            <div id="functions-list"></div>
-            <button id="add-function-btn">Add Function</button>
+        <div id="params-container">
+            <!-- Parameters will be dynamically injected here -->
         </div>
-    </div>
-
-    <div class="panel center-panel">
-        <div id="jxgbox" class="jxgbox"></div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const board = JXG.JSXGraph.initBoard('jxgbox', {
-            boundingbox: [-10, 10, 10, -10],
-            axis: true,
-            showCopyright: false,
-            grid: true,
-            renderer: 'canvas'
+document.addEventListener('DOMContentLoaded', () => {
+    const plotDiv = document.getElementById('plot');
+    const templateSelect = document.getElementById('template-select');
+    const paramsContainer = document.getElementById('params-container');
+
+    window.graphTemplates = window.graphTemplates || {};
+    const loadedTemplates = new Set();
+
+    function loadTemplateScript(templateName, callback) {
+        if (loadedTemplates.has(templateName)) {
+            callback();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `graph_templates/${templateName}.js`;
+        script.onload = () => {
+            loadedTemplates.add(templateName);
+            callback();
+        };
+        script.onerror = () => {
+            console.error(`Error loading template: ${templateName}`);
+        };
+        document.head.appendChild(script);
+    }
+
+    function updatePlot() {
+        const selectedTemplate = templateSelect.value;
+        const activeTemplate = window.graphTemplates[selectedTemplate];
+        if (!activeTemplate) return;
+
+        const params = {};
+        paramsContainer.querySelectorAll('.param').forEach(input => {
+            params[input.dataset.param] = parseFloat(input.value);
+            if (isNaN(params[input.dataset.param])) params[input.dataset.param] = 0;
         });
-
-        const state = {
-            functions: [],
-            intersections: []
-        };
-        const MAX_FUNCTIONS = 6;
-
-        const xRangeInput = document.getElementById('x-range');
-        const yRangeInput = document.getElementById('y-range');
-        const showGridCheckbox = document.getElementById('show-grid');
-        const showLabelsCheckbox = document.getElementById('show-labels');
-        const addFunctionBtn = document.getElementById('add-function-btn');
-        const functionsList = document.getElementById('functions-list');
         
-        const updateBoard = () => {
-            const xRange = xRangeInput.value.split(',').map(Number);
-            const yRange = yRangeInput.value.split(',').map(Number);
-            if (xRange.length === 2 && yRange.length === 2 && !isNaN(xRange[0]) && !isNaN(xRange[1]) && !isNaN(yRange[0]) && !isNaN(yRange[1])) {
-                 board.setBoundingBox([xRange[0], yRange[1], xRange[1], yRange[0]], true);
-            }
-
-            board.options.grid.strokeColor = showGridCheckbox.checked ? '#ffffff33' : '#00000000';
-            board.options.grid.strokeOpacity = showGridCheckbox.checked ? 0.6 : 0;
-            
-            for (const ax in board.axes) {
-                board.axes[ax].defaultTicks.setAttribute({
-                    drawLabels: showLabelsCheckbox.checked,
-                    label: {
-                        color: showLabelsCheckbox.checked ? 'white' : 'transparent'
-                    }
-                })
-            }
-
-            board.fullUpdate();
-        };
-
-        const renderFunctions = () => {
-            // Clear existing functions from board
-            board.suspendUpdate();
-            state.functions.forEach(f => {
-                if (f.plot) board.removeObject(f.plot);
-            });
-            
-            state.functions.forEach(func => {
-                if (!func.expression || func.expression.trim() === '') {
-                    func.plot = null;
-                    return; // Skip empty/whitespace-only functions
-                }
-                try {
-                    const userFunc = new Function('x', 'return ' + func.expression);
-                    // Test function
-                    userFunc(1);
-                    
-                    func.plot = board.create('functiongraph', [userFunc], {
-                        strokeColor: func.color,
-                        strokeWidth: 2,
-                        name: func.expression // for hover
-                    });
-                } catch (e) {
-                    console.error("Error parsing function:", func.expression, e);
-                    func.plot = null;
-                }
-            });
-            board.unsuspendUpdate();
-        };
-
-        const addFunctionUI = (id, expression = '', color = '#ffffff') => {
-            const funcId = `func-${id}`;
-            const item = document.createElement('div');
-            item.className = 'function-item';
-            item.id = funcId;
-
-            const exprInput = document.createElement('input');
-            exprInput.type = 'text';
-            exprInput.value = expression;
-            exprInput.placeholder = 'e.g., Math.sin(x) or x*x';
-            exprInput.oninput = () => {
-                const func = state.functions.find(f => f.id === id);
-                func.expression = exprInput.value;
-                renderFunctions();
-            };
-
-            const colorInput = document.createElement('input');
-            colorInput.type = 'color';
-            colorInput.value = color;
-            colorInput.oninput = () => {
-                const func = state.functions.find(f => f.id === id);
-                func.color = colorInput.value;
-                renderFunctions();
-            };
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-btn';
-            removeBtn.textContent = '-';
-            removeBtn.onclick = () => {
-                state.functions = state.functions.filter(f => f.id !== id);
-                document.getElementById(funcId).remove();
-                addFunctionBtn.disabled = false;
-                renderFunctions();
-            };
-
-            item.appendChild(exprInput);
-            item.appendChild(colorInput);
-            item.appendChild(removeBtn);
-            functionsList.appendChild(item);
-        };
-
-        addFunctionBtn.onclick = () => {
-            if (state.functions.length < MAX_FUNCTIONS) {
-                const newId = Date.now();
-                const defaultColor = ['#FF6347', '#4682B4', '#32CD32', '#FFD700', '#6A5ACD', '#DA70D6'][state.functions.length];
-                state.functions.push({ id: newId, expression: '', color: defaultColor, plot: null });
-                addFunctionUI(newId, '', defaultColor);
-
-                if (state.functions.length >= MAX_FUNCTIONS) {
-                    addFunctionBtn.disabled = true;
-                }
-            }
-        };
-
-        // Event Listeners
-        xRangeInput.addEventListener('change', updateBoard);
-        yRangeInput.addEventListener('change', updateBoard);
-        showGridCheckbox.addEventListener('change', updateBoard);
-        showLabelsCheckbox.addEventListener('change', updateBoard);
+        const outputEl = paramsContainer.querySelector('.output-div');
+        const traces = activeTemplate.plot(params, outputEl);
         
-        // Initial call
-        updateBoard();
-        addFunctionBtn.click(); // Add one function by default
-        const firstFunc = state.functions[0];
-        firstFunc.expression = 'x';
-        document.querySelector('.function-item input[type="text"]').value = 'x';
-        renderFunctions();
+        const layout = {
+            title: activeTemplate.name,
+            template: 'plotly_dark',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { family: 'Comfortaa, sans-serif', color: '#fff' },
+            legend: { x: 1, y: 1, xanchor: 'right' },
+            xaxis: { title: activeTemplate.xaxis, rangemode: 'tozero', zeroline: false, fixedrange: true, gridcolor: 'rgba(255, 255, 255, 0.4)' },
+            yaxis: { title: activeTemplate.yaxis, rangemode: 'tozero', zeroline: false, fixedrange: true, gridcolor: 'rgba(255, 255, 255, 0.4)' },
+            transition: {
+                duration: 200,
+                easing: 'cubic-in-out'
+            },
+            margin: { l: 40, r: 25, b: 40, t: 40 }
+        };
 
+        Plotly.react(plotDiv, traces, layout, { responsive: true, displayModeBar: false });
+    }
+
+    function switchTemplate() {
+        const selectedTemplate = templateSelect.value;
+        
+        loadTemplateScript(selectedTemplate, () => {
+            const template = window.graphTemplates[selectedTemplate];
+            if (!template) return;
+            
+            paramsContainer.innerHTML = template.generateHTML();
+            updatePlot();
+        });
+    }
+
+    templateSelect.addEventListener('change', switchTemplate);
+    paramsContainer.addEventListener('input', (e) => {
+        if (e.target.classList.contains('param')) {
+            updatePlot();
+        }
     });
+
+    switchTemplate();
+});
 </script>
 </body>
 </html>

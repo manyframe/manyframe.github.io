@@ -49,34 +49,40 @@
             box-sizing: border-box;
         }
         h1 { margin-bottom: 20px; text-align: left; font-size: 24px; }
+        
         .panel {
             display: flex;
             flex-direction: column;
             height: 100%;
-            overflow-y: auto;
+            box-sizing: border-box;
         }
-        .left-panel {
+
+        .controls-panel {
             width: 320px;
             flex-shrink: 0;
             gap: 20px;
-            padding-right: 10px; /* Scrollbar space */
         }
-        .center-panel {
-            flex: 1;
-            align-items: center;
-            justify-content: center;
+        
+        .result-panel {
+            flex-grow: 1;
             background-color: #ffffff15;
             border-radius: 16px;
             border: 1px solid #ffffff9f;
             padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #output-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: auto;
+            min-height: 0;
         }
-        .right-panel {
-            width: 250px;
-            flex-shrink: 0;
-            justify-content: flex-start;
-            padding-left: 10px;
-        }
+
         .control-group {
             background-color: #ffffff15;
             border: 1px solid #ffffff9f;
@@ -133,7 +139,8 @@
         textarea {
             width: 100%;
             min-height: 150px;
-            resize: vertical;
+            resize: none;
+            overflow-y: hidden;
             font-family: monospace;
             background-color: #ffffff15;
             color: #fff;
@@ -143,6 +150,34 @@
             font-size: 20px;
             box-sizing: border-box;
         }
+        .symbol-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .symbol-btn {
+            background-color: #ffffff15;
+            border: 1px solid #ffffff9f;
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .symbol-btn:hover {
+            background-color: #ffffff30;
+        }
+        .symbol-btn svg {
+            height: 20px;
+            width: auto;
+        }
+        .symbol-btn svg g {
+            fill: white !important;
+            stroke: white !important;
+        }
         input[type=range] {
             width: 100%;
             accent-color: #fff;
@@ -151,9 +186,10 @@
         }
         .actions {
             display: flex;
-            flex-direction: column;
             gap: 15px;
             width: 100%;
+            flex-shrink: 0;
+            margin-top: 1rem;
         }
         .action-btn {
             padding: 12px 20px;
@@ -164,6 +200,7 @@
             font-weight: bold;
             transition: background-color 0.2s, color 0.2s, opacity 0.2s;
             text-align: center;
+            flex-grow: 1;
         }
         .action-btn.primary {
             background-color: #ffffff;
@@ -179,11 +216,44 @@
         .action-btn.secondary:hover {
             background-color: #333;
         }
-        .output-area svg {
+        #output-area svg {
             max-width: 100%;
             height: auto;
             display: block;
             margin: auto;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                overflow: hidden; /* Prevent browser chrome from interfering with 100vh layout */
+            }
+            .app-layout {
+                flex-direction: column;
+                height: 100vh;
+                padding: 10px;
+                gap: 10px;
+            }
+            .panel {
+                width: 100% !important;
+                height: 50%; /* Each panel takes half the viewport height */
+            }
+            .result-panel {
+                order: -1; /* Move result to the top */
+            }
+            .controls-panel {
+                overflow-y: auto; /* Make controls scrollable */
+            }
+            h1 {
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+            textarea {
+                min-height: 40px; /* Start smaller */
+                flex-grow: 0; /* Let JS control height */
+            }
+            #output-area svg {
+                max-width: 90%; /* Make the SVG a bit smaller */
+            }
         }
     </style>
 </head>
@@ -194,8 +264,16 @@
   style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"
 ></iframe>
     <div class="app-layout">
-        <div class="panel left-panel">
+        <div class="panel controls-panel">
             <h1>LaTeX to SVG</h1>
+            <div class="symbol-bar">
+                <button class="symbol-btn" data-insert="\frac{}{}" data-move-cursor="-3"><span>$\frac{x}{y}$</span></button>
+                <button class="symbol-btn" data-insert="\sqrt{}" data-move-cursor="-1"><span>$\sqrt{x}$</span></button>
+                <button class="symbol-btn" data-insert="^{}" data-move-cursor="-1"><span>$x^n$</span></button>
+                <button class="symbol-btn" data-insert="_{}" data-move-cursor="-1"><span>$x_n$</span></button>
+                <button class="symbol-btn" data-insert="\int" data-move-cursor="0"><span>$\int$</span></button>
+                <button class="symbol-btn" data-insert="\sum" data-move-cursor="0"><span>$\sum$</span></button>
+            </div>
             <textarea id="latex-input" placeholder="E = mc^2"></textarea>
             
             <div class="control-group">
@@ -204,11 +282,10 @@
             </div>
         </div>
 
-        <div class="panel center-panel" id="output-area">
-            <!-- SVG will be rendered here -->
-        </div>
-
-        <div class="panel right-panel">
+        <div class="panel result-panel">
+            <div id="output-area">
+                <!-- SVG will be rendered here -->
+            </div>
             <div class="actions">
                 <button id="copy-btn" class="action-btn secondary">Copy SVG Code</button>
                 <button id="download-btn" class="action-btn primary">Download SVG</button>
@@ -223,10 +300,17 @@
             const scaleInput = document.getElementById('scale-input');
             const copyBtn = document.getElementById('copy-btn');
             const downloadBtn = document.getElementById('download-btn');
+            const symbolButtons = document.querySelectorAll('.symbol-btn');
 
             let lastSvgString = '';
 
+            const adjustTextareaHeight = () => {
+                latexInput.style.height = 'auto';
+                latexInput.style.height = `${latexInput.scrollHeight}px`;
+            };
+
             const renderLatex = () => {
+                adjustTextareaHeight(); // Adjust height on every input
                 const latex = latexInput.value.trim();
                 if (!latex) {
                     outputArea.innerHTML = '';
@@ -254,7 +338,7 @@
 
                     // Apply scale (Convert ex to px like the reference site)
                     const scale = parseFloat(scaleInput.value) || 8;
-                    const scalingPxPerEx = 40 * scale;
+                    const scalingPxPerEx = 30 * scale;
 
                     const exToPx = (val) => {
                         const match = val && val.match(/^(.*)ex$/);
@@ -329,15 +413,43 @@
                 }
             };
 
+            symbolButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const textToInsert = button.dataset.insert;
+                    const cursorMove = parseInt(button.dataset.moveCursor, 10);
+                    
+                    latexInput.focus();
+                    const startPos = latexInput.selectionStart;
+                    const endPos = latexInput.selectionEnd;
+                    const text = latexInput.value;
+
+                    latexInput.value = text.substring(0, startPos) + textToInsert + text.substring(endPos);
+                    
+                    const newCursorPos = startPos + textToInsert.length + cursorMove;
+                    latexInput.setSelectionRange(newCursorPos, newCursorPos);
+                    
+                    renderLatex();
+                    adjustTextareaHeight();
+                });
+            });
+
             // Event Listeners
             latexInput.addEventListener('input', renderLatex);
             scaleInput.addEventListener('input', renderLatex);
             copyBtn.addEventListener('click', copyToClipboard);
             downloadBtn.addEventListener('click', downloadSvg);
+            window.addEventListener('resize', adjustTextareaHeight);
 
             // Initial setup
             latexInput.value = "E = mc^2";
-            document.addEventListener('MathJaxReady', renderLatex);
+            document.addEventListener('MathJaxReady', () => {
+                MathJax.typesetPromise(document.querySelectorAll('.symbol-bar span')).then(() => {
+                    // Buttons are rendered, now do the initial render of the content
+                    renderLatex();
+                    // Adjust height after initial render
+                    setTimeout(adjustTextareaHeight, 100);
+                });
+            });
         });
     </script>
 </body>

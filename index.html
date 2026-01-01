@@ -26,6 +26,7 @@
             margin: 0 50px; /* Body side margin */
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
         nav {
@@ -45,7 +46,7 @@
         .page-list {
             display: flex;
             flex-direction: column;
-            width: 600px;
+            width: 500px;
             transition: 0.3s ease;
             margin-top: 150px;
         }
@@ -55,10 +56,11 @@
             color: #ffffff;
             padding: 30px;
             border-bottom: 1px solid #ffffff; /* Line between pages */
-            font-size: 23px;
+            font-size: 25px;
             transition: 0.2s ease;
             display: block;
             border-radius: 0; /* No round edges */
+            text-align: center;
         }
 
         .page-link:first-child {
@@ -69,6 +71,27 @@
             background-color: #ffffff;
             color: black;
             letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .brand {
+                font-size: 28px;
+                letter-spacing: 2px;
+            }
+
+            .page-list {
+                width: 100%;
+                margin-top: 100px;
+            }
+
+            .page-link {
+                padding: 20px;
+                font-size: 18px;
+            }
+
+            .container {
+                margin: 0 20px;
+            }
         }
     </style>
 </head>
@@ -87,6 +110,7 @@
             <a href="graph.html" class="page-link">Function to Graph</a>
             <a href="convertig.html" class="page-link">Photo to Instagram</a>
             <a href="convert1x1.html" class="page-link">1x1 Image Converter</a>
+            <a href="2048.html" class="page-link">2048</a>
         </div>
     </div>
 </body>

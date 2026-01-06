@@ -1,0 +1,33 @@
+{
+  "categories": [
+    {
+        "name": "Converters",
+        "items": [
+          {
+            "title": "Graph Tool",
+            "href": "graph.html",
+            "image": "card photos/wp10420650-stock-chart-wallpapers.jpg"
+          },
+          {
+            "title": "LaTeX to SVG",
+            "href": "latex-to-svg.html",
+            "image": "card photos/wp2597342.webp"
+          },
+          {
+            "title": "IG Converter",
+            "href": "convertig.html",
+            "image": "card photos/cool-instagram.jpg"
+          },
+          {
+            "title": "1x1 Converter",
+            "href": "convert1x1.html",
+            "image": "card photos/wp4003781.jpg"
+          }
+        ]
+      },
+      {
+        "name": "UG",
+        "items": []
+      }
+  ]
+}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject View</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background">
+        <!-- Optional background iframe or image -->
+    </div>
+
+    <div class="mobile-nav">
+        <div class="mobile-nav-title">Manyframes</div>
+        <button class="hamburger-menu" onclick="document.querySelector('.sidebar').classList.toggle('open')">
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+        </button>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="graph.html">Graph Tool</a></li>
+                <!-- Add other links as needed -->
+            </ul>
+        </div>
+
+        <div class="content">
+            <h1 id="subject-title">Loading...</h1>
+            <div id="subject-content"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load subject data
+            const params = new URLSearchParams(window.location.search);
+            const subject = params.get('subject');
+
+            if (subject) {
+                fetch(`ug/${subject}.json`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Subject not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.getElementById('subject-title').textContent = data.title;
+                        document.getElementById('subject-content').innerHTML = data.content;
+                    })
+                    .catch(error => {
+                        document.getElementById('subject-title').textContent = 'Error';
+                        document.getElementById('subject-content').textContent = 'Could not load subject data.';
+                        console.error(error);
+                    });
+            } else {
+                document.getElementById('subject-title').textContent = 'No Subject Selected';
+            }
+        });
+    </script>
+</body>
+</html>

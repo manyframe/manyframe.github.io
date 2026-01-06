@@ -3,115 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manyframe</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
-
-    <style>
-
-
-        body {
-            background-color: #ffffff;
-            color: #ffffff;
-            font-family: Comfortaa, sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            margin: 0 50px; /* Body side margin */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        nav {
-            display: flex;
-            justify-content: center;
-            padding: 50px 0;
-
-        }
-
-        .brand {
-            font-size: 35px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-        }
-
-        .page-list {
-            display: flex;
-            flex-direction: column;
-            width: 500px;
-            transition: 0.3s ease;
-            margin-top: 150px;
-        }
-
-        .page-link {
-            text-decoration: none;
-            color: #ffffff;
-            padding: 30px;
-            border-bottom: 1px solid #ffffff; /* Line between pages */
-            font-size: 25px;
-            transition: 0.2s ease;
-            display: block;
-            border-radius: 0; /* No round edges */
-            text-align: center;
-        }
-
-        .page-link:first-child {
-            border-top: 1px solid #ffffff;
-        }
-
-        .page-link:hover {
-            background-color: #ffffff;
-            color: black;
-            letter-spacing: 1px;
-        }
-
-        @media (max-width: 768px) {
-            .brand {
-                font-size: 28px;
-                letter-spacing: 2px;
-            }
-
-            .page-list {
-                width: 100%;
-                margin-top: 100px;
-            }
-
-            .page-link {
-                padding: 20px;
-                font-size: 18px;
-            }
-
-            .container {
-                margin: 0 20px;
-            }
-        }
-    </style>
+    <title>Manyframes Tools</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<iframe 
-  src="background.html" 
-  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"
-></iframe>
-    <div class="container">
-        <nav>
-            <div class="brand">Manyframe</div>
+
+    <div class="background">
+        <iframe id="background-iframe"></iframe>
+    </div>
+
+    <div class="mobile-nav">
+        <button class="hamburger-menu" aria-label="Open menu">
+            <span class="line"></span>
+            <span class="line"></span>
+        </button>
+        <div class="mobile-nav-title">Featured</div>
+    </div>
+
+    <div class="main-container">
+        <nav class="sidebar">
+            <h2>Categories</h2>
+            <ul>
+                <!-- Categories will be loaded by script.js -->
+            </ul>
         </nav>
 
-        <div class="page-list">
-            <a href="latex-to-svg.html" class="page-link">Latex to SVG</a>
-            <a href="graph.html" class="page-link">Function to Graph</a>
-            <a href="convertig.html" class="page-link">Photo to Instagram</a>
-            <a href="convert1x1.html" class="page-link">1x1 Image Converter</a>
-            <a href="2048.html" class="page-link">2048</a>
-        </div>
+        <main class="content">
+            <h1>Featured</h1>
+            <div class="card-grid">
+                <!-- Cards will be loaded by script.js -->
+            </div>
+        </main>
     </div>
+
+    <!-- <script src="script.js"></script> -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const sidebarList = document.querySelector('.sidebar ul');
+            const cardGrid = document.querySelector('.card-grid');
+            const contentTitle = document.querySelector('.content h1');
+            const mobileNavTitle = document.querySelector('.mobile-nav-title');
+            const hamburgerBtn = document.querySelector('.hamburger-menu');
+            const sidebar = document.querySelector('.sidebar');
+
+            // Hamburger Menu Logic
+            if (hamburgerBtn && sidebar) {
+                hamburgerBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                });
+            }
+
+            let categories = [];
+
+            try {
+                // 1. Load base data
+                const dataResponse = await fetch('data.json');
+                const data = await dataResponse.json();
+                categories = data.categories || [];
+
+                // 2. Load UG subjects dynamically from folder (via manifest)
+                try {
+                    const manifestResponse = await fetch('ug/manifest.json');
+                    const manifest = await manifestResponse.json();
+                    
+                    const ugItems = await Promise.all(manifest.map(async (filename) => {
+                        const subjectResp = await fetch(`ug/${filename}`);
+                        const subjectData = await subjectResp.json();
+                        return {
+                            title: subjectData.title,
+                            href: `subject.html?subject=${filename.replace('.json', '')}`,
+                            image: subjectData.image || 'card photos/default.jpg'
+                        };
+                    }));
+
+                    // Find or create UG category
+                    let ugCategory = categories.find(c => c.name === 'UG');
+                    if (!ugCategory) {
+                        ugCategory = { name: 'UG', items: [] };
+                        categories.push(ugCategory);
+                    }
+                    ugCategory.items = [...ugCategory.items, ...ugItems];
+
+                } catch (e) {
+                    console.warn('Could not load UG subjects:', e);
+                }
+
+                // 3. Render Sidebar and Initial Category
+                renderSidebar();
+                if (categories.length > 0) loadCategory(categories[0]);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+
+            function renderSidebar() {
+                sidebarList.innerHTML = '';
+                categories.forEach(category => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = '#';
+                    a.textContent = category.name;
+                    a.onclick = (e) => {
+                        e.preventDefault();
+                        loadCategory(category);
+                        sidebar.classList.remove('open');
+                    };
+                    li.appendChild(a);
+                    sidebarList.appendChild(li);
+                });
+            }
+
+            function loadCategory(category) {
+                document.querySelectorAll('.sidebar a').forEach(a => {
+                    a.classList.toggle('active', a.textContent === category.name);
+                });
+
+                contentTitle.textContent = category.name;
+                if(mobileNavTitle) mobileNavTitle.textContent = category.name;
+
+                cardGrid.innerHTML = '';
+                category.items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.backgroundImage = `url('${item.image}')`;
+                    card.innerHTML = `
+                        <div class="card-info">
+                            <div class="card-title">${item.title}</div>
+                            <a href="${item.href}" class="card-button">Open</a>
+                        </div>
+                    `;
+                    cardGrid.appendChild(card);
+                });
+            }
+        });
+    </script>
+    <script>
+        // This script is for setting the background dynamically
+        document.addEventListener('DOMContentLoaded', () => {
+            const backgroundIframe = document.getElementById('background-iframe');
+            if (backgroundIframe) {
+                const today = new Date();
+                const month = today.getMonth(); // 0 = January, 11 = December
+                const day = today.getDate();
+
+                let src = 'background/rain.html'; // Default background
+
+                // Check for winter season (December 15th to January 5th)
+                if ((month === 11 && day >= 15) || (month === 0 && day <= 5)) {
+                    src = 'background/snow.html';
+                }
+
+                backgroundIframe.src = src;
+            }
+        });
+    </script>
+
 </body>
 </html>
